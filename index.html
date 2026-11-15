@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Luka di Hulu, Duka di Hilir</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PANGGIL MESIN LEAFLET, SCROLLAMA, DAN CHART.JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/intersection-observer@0.12.0/intersection-observer.js"></script>
+    <script src="https://unpkg.com/scrollama"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- =========================================================================
+         BAGIAN 1: PENGATURAN DESAIN (CSS STYLING)
+         ========================================================================= -->
+    <style>
+        html { scroll-behavior: smooth; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #000; }
+        
+        #map { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -5; }
+        #story { position: relative; z-index: 5; padding-top: 135vh; pointer-events: none;}
+        
+        /* --- TAMPILAN SAMPUL --- */
+        #hero-section {
+            position: absolute; top: 0; left: 0; height: 100vh; width: 100%;
+            background-image: url('FileTambahan/Sampul.jpg'); 
+            background-size: cover; background-position: center; background-attachment: fixed;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; z-index: 1000; pointer-events: auto;
+        }
+        #hero-section::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.65); z-index: -1; }
+        .header-kiri { position: absolute; top: 40px; left: 40px; display: flex; align-items: center; gap: 15px; text-align: left; }
+        .logo-haka { width: 70px; }
+        .teks-tim { display: flex; flex-direction: column; }
+        .nama-tim { font-weight: 800; font-size: 16px; letter-spacing: 1.5px; color: #fff; font-family: 'Arial', sans-serif;}
+        .nama-anggota { font-size: 12px; color: #ddd; line-height: 1.4; margin-top: 4px; font-family: 'Arial', sans-serif;}
+        .event-kanan { position: absolute; top: 45px; right: 40px; font-size: 12px; font-weight: bold; color: #fff; letter-spacing: 1px; font-family: 'Arial', sans-serif;}
+        .judul-utama { font-size: 6em; font-weight: bold; margin: 0; color: #F5E6D3; font-family: 'Georgia', serif; line-height: 1.1; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        .sub-judul { font-size: 1.2em; max-width: 700px; margin: 20px auto 0; line-height: 1.6; color: #ddd; font-family: 'Arial', sans-serif; }
+        .tombol-mulai { background: linear-gradient(45deg, #e67e22, #d35400); color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px; letter-spacing: 2px; margin-top: 45px; box-shadow: 0 4px 15px rgba(230,126,34,0.4); animation: pulse-anim 2s infinite; font-family: 'Arial', sans-serif; pointer-events: auto;}
+        
+        /* --- KOTAK CERITA STANDAR (KIRI) --- */
+        .step { padding-bottom: 80vh; opacity: 0.3; transition: opacity 0.5s; width: 40vw; margin-left: 5vw; }
+        .step.active { opacity: 1; }
+        .step > div { background: rgba(35, 55, 35, 0.85); border: 1px solid rgba(255,255,255,0.15); border-left: 5px solid #F1C40F; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); padding: 35px; color: #ffffff; pointer-events: auto; backdrop-filter: blur(5px);}
+        .step > div h3 { font-size: 1.8em; font-weight: 800; margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; margin-bottom: 20px; font-family: 'Georgia', serif; color: #ffffff; }
+        .step > div p { line-height: 1.7; font-size: 1.1em; }
+        .step > div b { color: #F1C40F; }
+
+        /* --- KOTAK CERITA TENGAH BESAR (KHUSUS DATA HUJAN) --- */
+        .step-center { width: 70vw; margin: 0 auto; padding-bottom: 80vh; opacity: 0.3; transition: opacity 0.5s; }
+        .step-center.active { opacity: 1; }
+        .step-center > div { background: rgba(28, 43, 28, 0.95); border: 1px solid rgba(255,255,255,0.15); border-top: 5px solid #F1C40F; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); padding: 45px; color: #ffffff; pointer-events: auto; backdrop-filter: blur(10px);}
+        
+        /* --- KOTAK KESIMPULAN (TENGAH ATAS) --- */
+        .step-center-top { width: 60vw; margin: 0 auto; padding-top: 15vh; padding-bottom: 60vh; opacity: 0.3; transition: opacity 0.5s; }
+        .step-center-top.active { opacity: 1; }
+        .step-center-top > div { background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); padding: 35px; text-align: center; color: #ffffff; pointer-events: auto; backdrop-filter: blur(8px);}
+        .step-center-top h3 { font-size: 2em; color: #F1C40F; margin-top: 0; margin-bottom: 15px; font-family: 'Georgia', serif;}
+
+        /* --- LEGENDA & GRAFIK --- */
+        .legenda-banjir { display: flex; gap: 20px; margin-top: 20px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-size: 0.9em; flex-wrap: wrap;}
+        .item-legenda { display: flex; align-items: center; gap: 8px; }
+        .box-biru { width: 20px; height: 20px; background: #3498db; border-radius: 4px; }
+        .box-merah { width: 20px; height: 20px; background: #e74c3c; border-radius: 4px; opacity: 0.7; }
+        .box-ungu { width: 20px; height: 20px; background: #8e44ad; border-radius: 4px; opacity: 0.8; }
+        .wadah-grafik { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(255,255,255,0.1); }
+
+        /* --- KREDIT (FOOTER) --- */
+        .footer-credits {
+            position: relative; z-index: 10; background: #0a0a0a; color: #aaaaaa;
+            text-align: center; padding: 60px 20px; font-family: 'Arial', sans-serif;
+            border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20vh; pointer-events: auto;
+        }
+        .footer-credits h4 { color: #F1C40F; font-size: 18px; margin-bottom: 10px; letter-spacing: 2px;}
+        .footer-credits p { font-size: 14px; margin: 5px 0; line-height: 1.6;}
+        .footer-credits a { color: #3498db; text-decoration: none; }
+
+        @media (max-width: 750px) {
+            .step, .step-center, .step-center-top { width: 90vw; margin: 0 auto; }
+            .judul-utama { font-size: 3.5em; margin-top: 60px; }
+            .header-kiri { top: 20px; left: 20px; flex-direction: column; align-items: flex-start; gap: 10px;}
+            .event-kanan { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SAMPUL UTAMA -->
+    <div id="hero-section">
+        <div class="header-kiri">
+            <img src="FileTambahan/Logo_HAKA.svg" class="logo-haka" alt="Logo HAkA">
+            <div class="teks-tim">
+                <div class="nama-tim">TIM EDITVERTICES</div>
+                <div class="nama-anggota">Muhammad Hafid Putra Hafifi<br>Raden Naadri Rasyiq Akbar</div>
+            </div>
+        </div>
+        <div class="event-kanan">LEUSER GEOSTORY CHALLENGE | FESTIVAL RIMBA LEUSER 2026</div>
+        <h1 class="judul-utama">Luka di Hulu<br>Duka di Hilir</h1>
+        <p class="sub-judul">Potensi Bencana Akibat Kerusakan Hutan di Hulu.</p>
+        <a href="#cerita-mulai" class="tombol-mulai">MULAI BACA &darr;</a>
+    </div>
+
+    <!-- PETA BACKGROUND -->
+    <div id="map"></div>
+
+    <!-- KERANGKA BAB CERITA -->
+    <div id="story">
+        <div id="cerita-mulai"></div>
+
+        <!-- BAB 1 -->
+        <div class="step" data-lat="4.000" data-lng="95.000" data-zoom="7"> 
+            <div>
+                <h3><span style="color: #F1C40F;">1.</span> Mengenal Kawasan Ekosistem Leuser</h3>
+                <p><b>Kawasan Ekosistem Leuser (KEL)</b> membentang seluas 2,6 juta hektare melintasi Provinsi Aceh dan Sumatera Utara. Tempat ini adalah benteng ekologis terakhir di bumi di mana empat spesies endemik—<b>Badak, Gajah, Harimau, dan Orangutan Sumatera</b>—hidup berdampingan di alam liar.</p>
+            </div>
+        </div>
+
+        <!-- BAB 2 -->
+        <div class="step" data-lat="4.350" data-lng="97.000" data-zoom="8.5">
+            <div>
+                <h3><span style="color: #F1C40F;">2.</span> RASA LUKA</h3>
+                <p>Namun, di balik kekayaan alam yang dimilikinya, Ekosistem Leuser tidak terlepas dari berbagai tekanan.</p>
+                <p>Dalam kurun waktu tahun 2020 hingga 2025, tercatat lebih dari <b>55.000 hektare</b> tutupan hutan telah hilang di kawasan Ekosistem Leuser.</p>
+                <div class="wadah-grafik"><canvas id="chartDeforestasi" width="100%" height="60"></canvas></div>
+            </div>
+        </div>
+
+        <!-- BAB 3 -->
+        <div class="step" data-lat="4.200" data-lng="96.500" data-zoom="7.5">
+            <div>
+                <h3><span style="color: #F1C40F;">3.</span> DUKA DI HILIR</h3>
+                <p>Dampak deforestasi tidak hanya dirasakan oleh ekosistem dan satwa liar, tetapi juga berpotensi mengancam kehidupan masyarakat di sekitarnya. Perubahan tutupan hutan di wilayah hulu berkontribusi terhadap meningkatnya risiko banjir dan tanah longsor di wilayah hilir.</p>
+            </div>
+        </div>
+
+        <!-- BAB 4 -->
+        <div class="step step-center" data-lat="4.200" data-lng="97.200" data-zoom="7.5">
+            <div>
+                <h3 style="font-size: 2.2em; color: #ffffff;"><span style="color: #d49b54;">Hujan Harian</span> dan Bulanan</h3>
+                <p style="font-size: 1.15em;">Dari data harian CHIRPS, selama 2019–2024 puncak hujan rata-rata DAS tidak pernah lebih dari sekitar 56 mm per hari. Namun, <b>tahun 2025 melampauinya</b> hingga menyentuh <b>lebih dari 100 mm dalam sehari</b>.</p>
+                <p style="font-size: 1.15em; color: #F1C40F; margin-top: 20px;"><b>Anomali Cuaca Bertemu Deforestasi:</b> Curah hujan ekstrem ini jatuh di atas ekosistem yang telah kehilangan 55.000 hektare tutupan hutan. Tanpa akar pepohonan sebagai spons raksasa, miliaran kubik air hujan meluncur bebas menuju hilir.</p>
+            </div>
+        </div>
+
+        <!-- BAB 5 -->
+        <div class="step" data-lat="4.900" data-lng="97.250" data-zoom="10">
+            <div>
+                <h3><span style="color: #F1C40F;">5.</span> Langganan Banjir Aceh Timur</h3>
+                <p>Kabupaten Aceh Timur yang dialiri oleh <b>DAS Jambo Aye</b> merupakan salah satu wilayah hilir yang paling rentan. Banjir bandang <b>Desember 2023 hingga awal 2024</b> merendam belasan kecamatan dengan genangan mencapai 1,5 meter.</p>
+                <div class="legenda-banjir">
+                    <div class="item-legenda"><div class="box-biru"></div> Aliran Sungai Normal</div>
+                    <div class="item-legenda"><div class="box-merah"></div> Area Luapan Banjir</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BAB 6 -->
+        <div class="step" data-lat="3.800" data-lng="96.850" data-zoom="10">
+            <div>
+                <h3><span style="color: #F1C40F;">6.</span> Ancaman Lintas Tengah Sumatera</h3>
+                <p><b>Kabupaten Gayo Lues & Aceh Tenggara</b> (DAS Alas-Singkil) memiliki riwayat kelam luapan lumpur. Tragedi banjir bandang <b>November 2023</b> menghancurkan puluhan rumah dan <b>memutus total mobilitas Jalan Lintas Tengah Sumatera</b>.</p>
+            </div>
+        </div>
+
+        <!-- BAB 7 -->
+        <div class="step" data-lat="4.250" data-lng="97.600" data-zoom="10">
+            <div>
+                <h3><span style="color: #F1C40F;">7.</span> Kelumpuhan Jalur Logistik Utama</h3>
+                <p>Di <b>Kabupaten Aceh Tamiang</b> (DAS Tamiang), banjir parah <b>November 2022</b> merendam pusat kota. Dampak terparahnya, <b>Jalan Nasional Lintas Timur Sumatera lumpuh total hampir sepekan</b>.</p>
+            </div>
+        </div>
+
+        <!-- BAB 8: TANAH LONGSOR -->
+        <div class="step" data-lat="4.200" data-lng="96.500" data-zoom="8">
+            <div>
+                <h3><span style="color: #F1C40F;">8.</span> Ancaman Tanah Longsor</h3>
+                <p>Selain daya rusak banjir, hilangnya vegetasi pengikat tanah menjadikan topografi perbukitan terjal di kawasan Leuser sebagai bom waktu. Curah hujan ekstrem memicu pergerakan tanah yang masif.</p>
+                <p>Titik-titik ungu pada peta memperlihatkan sebaran potensi dan historis kawasan yang mengalami <b>tanah longsor</b>, menimbun jalur evakuasi warga dan merusak kebun-kebun di lereng pegunungan.</p>
+                <div class="legenda-banjir">
+                    <div class="item-legenda"><div class="box-ungu"></div> Titik Rawan/Kejadian Longsor</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BAB 9: KESIMPULAN (TENGAH ATAS & SEMUA LAYER MUNCUL) -->
+        <div class="step step-center-top" data-lat="4.300" data-lng="97.400" data-zoom="8">
+            <div>
+                <h3>Menjaga Hulu, Menyelamatkan Hilir</h3>
+                <p style="font-size: 1.2em; line-height: 1.6;">Rangkaian bencana di Aceh Timur, Gayo Lues, Aceh Tenggara, dan Aceh Tamiang adalah alarm nyata. Menghentikan laju kerusakan Kawasan Ekosistem Leuser bukan sekadar melestarikan alam, melainkan tentang <b>melindungi nyawa dan masa depan jutaan masyarakat yang hidup di hilir.</b></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         BAGIAN AKHIR: KREDIT / DAFTAR PUSTAKA
+         ========================================================================= -->
+    <div class="footer-credits">
+        <h4>TIM EDITVERTICES</h4>
+        <p><b>Muhammad Hafid Putra Hafifi</b> & <b>Raden Naadri Rasyiq Akbar</b></p>
+        <p style="margin-top: 20px; font-size: 12px; color: #777;">
+            <b>SUMBER DATA & REFERENSI:</b><br>
+            Peta Batas & Deforestasi: HAkA (Hutan, Alam dan Lingkungan Aceh)<br>
+            Data Iklim & Hujan: CHIRPS & IMERG Late V07B<br>
+            Historis Kebencanaan: Laporan Arsip BPBA (Desember 2023) & BNPB Pusat (2022-2024)<br>
+            Peta Basemap: Esri, Maxar, Earthstar Geographics
+        </p>
+        <p style="margin-top: 30px; font-size: 11px; letter-spacing: 1px;">
+            Karya ini disusun untuk kompetisi <b>Leuser Geostory Challenge 2026</b>
+        </p>
+    </div>
+
+    <!-- =========================================================================
+         BAGIAN 3: MESIN PETA & LOGIKA INTERAKSI (JAVASCRIPT)
+         ========================================================================= -->
+    <script>
+        const map = L.map('map', { zoomControl: false, scrollWheelZoom: false, dragging: false }).setView([2.5, 118.0], 5);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: '&copy; Esri' }).addTo(map);
+
+        let layerKEL, layerDeforest, layerKab, layerLongsor;
+        let layerJamboBef, layerJamboAft, layerKutaBef, layerKutaAft, layerTamBef, layerTamAft;
+        let chartAktif = null; 
+
+        // Style Layers
+        const styleBefore = { color: "#3498db", weight: 2, fillColor: "#2980b9", fillOpacity: 0.8 };
+        const styleAfter = { color: "#e74c3c", weight: 1, fillColor: "#c0392b", fillOpacity: 0.5 };
+        const styleLongsor = { color: "#8e44ad", weight: 2, fillColor: "#9b59b6", fillOpacity: 0.7 }; // Warna Ungu Longsor
+
+        // Memuat JSON
+        fetch('FileTambahan/Area_KEL.json').then(res=>res.json()).then(d=>{layerKEL=L.geoJSON(d,{style:{color:"#F1C40F",weight:3,fillOpacity:0.1}})});
+        fetch('FileTambahan/Deforestasi_KEL.json').then(res=>res.json()).then(d=>{layerDeforest=L.geoJSON(d,{style:{color:"#e67e22",weight:2,fillColor:"#d35400",fillOpacity:0.6}})});
+        fetch('FileTambahan/Kab_Penelitian.json').then(res=>res.json()).then(d=>{layerKab=L.geoJSON(d,{style:{color:"#ecf0f1",weight:2,fillColor:"#bdc3c7",fillOpacity:0.1}})});
+        fetch('FileTambahan/Kel_longsor.json').then(res=>res.json()).then(d=>{layerLongsor=L.geoJSON(d,{style:styleLongsor})});
+
+        fetch('FileTambahan/JamboAye_Bef.json').then(res=>res.json()).then(d=>{layerJamboBef=L.geoJSON(d,{style:styleBefore})});
+        fetch('FileTambahan/JamboAye_Aft.json').then(res=>res.json()).then(d=>{layerJamboAft=L.geoJSON(d,{style:styleAfter})});
+        fetch('FileTambahan/KutaCane_Before.json').then(res=>res.json()).then(d=>{layerKutaBef=L.geoJSON(d,{style:styleBefore})});
+        fetch('FileTambahan/KutaCane_After.json').then(res=>res.json()).then(d=>{layerKutaAft=L.geoJSON(d,{style:styleAfter})});
+        fetch('FileTambahan/Tamiang_Before.json').then(res=>res.json()).then(d=>{layerTamBef=L.geoJSON(d,{style:styleBefore})});
+        fetch('FileTambahan/Tamiang_After.json').then(res=>res.json()).then(d=>{layerTamAft=L.geoJSON(d,{style:styleAfter})});
+
+        const scroller = scrollama();
+        scroller.setup({ step: '.step', offset: 0.5, progress: true })
+        .onStepEnter(response => {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            response.element.classList.add('active');
+
+            const lat = parseFloat(response.element.getAttribute('data-lat'));
+            const lng = parseFloat(response.element.getAttribute('data-lng'));
+            const zoom = parseInt(response.element.getAttribute('data-zoom'));
+            const babKe = Array.from(document.querySelectorAll('.step')).indexOf(response.element) + 1;
+
+            if(!isNaN(lat) && !isNaN(lng)) map.flyTo([lat, lng], zoom, { animate: true, duration: 2.5 });
+
+            // Sapu Bersih Peta
+            if(layerKEL&&map.hasLayer(layerKEL)) map.removeLayer(layerKEL);
+            if(layerDeforest&&map.hasLayer(layerDeforest)) map.removeLayer(layerDeforest);
+            if(layerLongsor&&map.hasLayer(layerLongsor)) map.removeLayer(layerLongsor);
+            if(layerJamboBef&&map.hasLayer(layerJamboBef)) map.removeLayer(layerJamboBef);
+            if(layerJamboAft&&map.hasLayer(layerJamboAft)) map.removeLayer(layerJamboAft);
+            if(layerKutaBef&&map.hasLayer(layerKutaBef)) map.removeLayer(layerKutaBef);
+            if(layerKutaAft&&map.hasLayer(layerKutaAft)) map.removeLayer(layerKutaAft);
+            if(layerTamBef&&map.hasLayer(layerTamBef)) map.removeLayer(layerTamBef);
+            if(layerTamAft&&map.hasLayer(layerTamAft)) map.removeLayer(layerTamAft);
+
+            // Peraturan Dasar Kabupaten
+            if (babKe >= 3 && layerKab) { if (!map.hasLayer(layerKab)) layerKab.addTo(map); } 
+            else { if (layerKab && map.hasLayer(layerKab)) map.removeLayer(layerKab); }
+
+            // Logika Per Bab
+            if (babKe === 1 && layerKEL) layerKEL.addTo(map);
+            else if (babKe === 2 && layerDeforest) layerDeforest.addTo(map);
+            else if (babKe === 5) { if(layerJamboAft) layerJamboAft.addTo(map); if(layerJamboBef) layerJamboBef.addTo(map); }
+            else if (babKe === 6) { if(layerKutaAft) layerKutaAft.addTo(map); if(layerKutaBef) layerKutaBef.addTo(map); }
+            else if (babKe === 7) { if(layerTamAft) layerTamAft.addTo(map); if(layerTamBef) layerTamBef.addTo(map); }
+            else if (babKe === 8) { if(layerLongsor) layerLongsor.addTo(map); }
+            else if (babKe === 9) { 
+                // BAB KESIMPULAN: MUNCULKAN SEMUA SESUAI URUTAN TUMPUKAN EKSPEKTASI JURI
+                // 1. Batas Wilayah (Sudah ada di bawah)
+                // 2. Longsor di atas Batas Wilayah
+                if(layerLongsor) layerLongsor.addTo(map);
+                // 3. Banjir Merah di atas Longsor
+                if(layerJamboAft) layerJamboAft.addTo(map);
+                if(layerKutaAft) layerKutaAft.addTo(map);
+                if(layerTamAft) layerTamAft.addTo(map);
+                // 4. Sungai Biru paling atas
+                if(layerJamboBef) layerJamboBef.addTo(map);
+                if(layerKutaBef) layerKutaBef.addTo(map);
+                if(layerTamBef) layerTamBef.addTo(map);
+            }
+
+            // Pemicu Grafik Bab 2
+            if(babKe === 2 && !chartAktif) {
+                Chart.defaults.color = '#ffffff';
+                chartAktif = new Chart(document.getElementById('chartDeforestasi').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: ['2020','2021','2022','2023','2024','2025'], datasets: [{ label: 'Kehilangan Hutan (Ha)', data: [7330.97, 4746.53, 4412.03, 4853.77, 5699.00, 28011.57], backgroundColor: '#e67e22', borderColor: '#F1C40F', borderWidth: 1 }] },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+                });
+            }
+        });
+
+        window.addEventListener('resize', scroller.resize);
+
+        let isAtTop = true;
+        window.addEventListener('scroll', () => {
+            if (window.scrollY < 300 && !isAtTop) { 
+                isAtTop = true;
+                if(layerKEL&&map.hasLayer(layerKEL)) map.removeLayer(layerKEL);
+                if(layerKab&&map.hasLayer(layerKab)) map.removeLayer(layerKab);
+                map.flyTo([2.5, 118.0], 5, { animate: true, duration: 2.0 });
+            } else if (window.scrollY >= 300) { isAtTop = false; }
+        });
+    </script>
+</body>
+</html>
