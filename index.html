@@ -230,9 +230,9 @@
 
         // Memuat JSON
         fetch('FileTambahan/Area_KEL.json').then(res=>res.json()).then(d=>{layerKEL=L.geoJSON(d,{style:{color:"#F1C40F",weight:3,fillOpacity:0.1}})});
-        fetch('FileTambahan/Deforestasi_KEL.json').then(res=>res.json()).then(d=>{layerDeforest=L.geoJSON(d,{style:{color:"#e67e22",weight:2,fillColor:"#d35400",fillOpacity:0.6}})});
+        fetch('FileTambahan/Deforestasi_KEL (1).json').then(res=>res.json()).then(d=>{layerDeforest=L.geoJSON(d,{style:{color:"#e67e22",weight:2,fillColor:"#d35400",fillOpacity:0.6}})});
         fetch('FileTambahan/Kab_Penelitian.json').then(res=>res.json()).then(d=>{layerKab=L.geoJSON(d,{style:{color:"#ecf0f1",weight:2,fillColor:"#bdc3c7",fillOpacity:0.1}})});
-        fetch('FileTambahan/Kel_longsor.json').then(res=>res.json()).then(d=>{layerLongsor=L.geoJSON(d,{style:styleLongsor})});
+        fetch('FileTambahan/Kel_Longsor (1).json').then(res=>res.json()).then(d=>{layerLongsor=L.geoJSON(d,{style:styleLongsor})});
 
         fetch('FileTambahan/JamboAye_Bef.json').then(res=>res.json()).then(d=>{layerJamboBef=L.geoJSON(d,{style:styleBefore})});
         fetch('FileTambahan/JamboAye_Aft.json').then(res=>res.json()).then(d=>{layerJamboAft=L.geoJSON(d,{style:styleAfter})});
