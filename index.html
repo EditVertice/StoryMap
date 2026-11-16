@@ -9,13 +9,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body, html { margin: 0; padding: 0; font-family: 'Lora', serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        /* PERBAIKAN SCROLL: Pastikan overflow-y aktif dan hapus pemblokir scroll */
+        body, html { 
+            margin: 0; padding: 0; font-family: 'Lora', serif; 
+            background-color: #0f172a; color: #f8fafc; 
+            overflow-x: hidden; overflow-y: auto; 
+        }
         h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
         
-        #map { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; background-color: #000; }
+        /* Peta dikebalkan dari sentuhan agar tidak memblokir scroll halaman */
+        #map { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            z-index: 1; background-color: #000; pointer-events: none; 
+        }
         
         /* === SAMPUL === */
-        #sampul { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; background: url('FileTambahan/Sampul.jpg') center/cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        #sampul { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; background: url('FileTambahan/Sampul.jpg') center/cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: auto; }
         .sampul-overlay { position: absolute; top:0; left:0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 1; }
         
         .header-top { position: absolute; top: 20px; left: 30px; right: 30px; z-index: 20; display: flex; justify-content: space-between; align-items: flex-start; }
@@ -35,15 +44,26 @@
         .btn-mulai:hover { background: #c2410c; transform: scale(1.05); }
 
         /* === KOTAK CERITA === */
-        #story { position: relative; z-index: 10; pointer-events: none; margin-top: 50vh; }
-        .step { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; border-left: 5px solid #facc15; border-radius: 10px; padding: 30px; margin: 0 auto 80vh 5%; width: 420px; opacity: 0.2; transition: opacity 0.5s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        /* Hapus pointer-events: none dari #story agar bisa discroll dari mana saja */
+        #story { position: relative; z-index: 10; pointer-events: auto; margin-top: 50vh; }
+        .step { background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; border-left: 5px solid #facc15; border-radius: 10px; padding: 30px; margin: 0 auto 80vh 5%; width: 420px; opacity: 0.2; transition: opacity 0.5s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .step.is-active { opacity: 1; }
         .step h2 { color: #facc15; font-size: 1.4rem; margin-top: 0; line-height: 1.3; }
         .step p { line-height: 1.6; font-size: 0.95rem; }
         .chart-container { width: 100%; height: 200px; margin-top: 15px; }
 
-        .video-box { width: 100%; border-radius: 8px; overflow: hidden; margin-top: 15px; border: 1px solid #334155; background: #000; }
-        .video-box video { width: 100%; display: block; }
+        /* === KOTAK VIDEO DENGAN EFEK LOADING === */
+        .video-box { 
+            width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; 
+            margin-top: 15px; border: 1px solid #334155; background: #0f172a; position: relative;
+        }
+        .video-box::before {
+            content: "Memuat Animasi..."; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); color: #475569; font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem; font-weight: bold; z-index: 1; animation: pulse-loading 1.5s infinite;
+        }
+        @keyframes pulse-loading { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .video-box video { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 2; }
 
         /* === TOMBOL SIMULASI === */
         #simulasi-panel { position: fixed; top: 20px; right: 20px; z-index: 15; background: rgba(15, 23, 42, 0.9); padding: 15px; border-radius: 10px; border: 1px solid #334155; display: none; flex-direction: column; gap: 10px; pointer-events: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -64,6 +84,7 @@
 
         /* === TAMPILAN HP === */
         @media (max-width: 768px) {
+            /* Hapus svh yang membuat konflik di beberapa browser, gunakan vh standar */
             #map { height: 50vh !important; z-index: 50 !important; position: fixed !important; top: 0; border-bottom: 2px solid #334155; }
             #sampul { height: 100vh; z-index: 100 !important; position: relative; }
             
@@ -108,7 +129,6 @@
         <div class="header-top">
             <div class="header-left">
                 <div class="logos">
-                    <!-- LOGO HAKA & KELOMPOK -->
                     <img src="FileTambahan/Logo_HAKA.svg" alt="HAkA" onerror="this.style.display='none'">
                     <img src="FileTambahan/Logo_kelompok.png" alt="Kelompok" onerror="this.src='FileTambahan/Logo_kelompok.svg'">
                 </div>
@@ -140,7 +160,7 @@
             
             <article class="step" data-step="1">
                 <h2>Mengenal Ekosistem Leuser</h2>
-                <p>Membentang seluas <strong style="color: #facc15;">2,6 juta hektare</strong> melintasi Provinsi Aceh dan Sumatera Utara, Kawasan Ekosistem Leuser (KEL) bukan sekadar benteng terakhir satwa endemik. Ini adalah 'menara air' raksasa; spons ekologis yang memompa napas kehidupan bagi jutaan manusia.</p>
+                <p>Membentang seluas <strong style="color: #facc15;">2,6 juta hektare</strong> melintasi Provinsi Aceh dan Sumatera Utara, Kawasan Ekosistem Leuser (KEL) bukan sekadar benteng terakhir satwa endemik. Ini adalah "menara air" raksasa. Spons ekologis yang memompa napas kehidupan bagi jutaan manusia.</p>
             </article>
 
             <article class="step" data-step="2">
@@ -167,7 +187,6 @@
             <article class="step" data-step="5">
                 <h2>Duka Aceh Timur</h2>
                 <p>Limpasan liar mengamuk di hilir Aceh Timur. DAS Jambo Aye terpaksa menelan volume air raksasa akibat musnahnya <strong style="color: #ea580c;">3.203,07 hektare</strong> hutan di wilayah hulunya. Lonjakan esktrem terjadi di akhir tahun 2025.</p>
-                <!-- GRAFIK BULANAN JAMBO AYE -->
                 <div class="chart-container" style="height: 150px;"><canvas id="chartTimur"></canvas></div>
                 
                 <p style="font-size: 0.8rem; color:#cbd5e1; font-style: italic; margin-top:15px;">*Gunakan tombol simulasi peta untuk mengubah kondisi video animasi di bawah:</p>
@@ -181,7 +200,6 @@
             <article class="step" data-step="6">
                 <h2>Duka Lintas Tengah</h2>
                 <p>Bencana lumpur ini adalah kiriman dari luka deforestasi seluas <strong style="color: #facc15;">855,24 hektare</strong> di lereng hulu Gayo dan Agara. Air bah meluncur bebas dari tebing gundul membawa material pekat meneror Jalan Lintas Tengah.</p>
-                <!-- GRAFIK BULANAN LINTAS TENGAH -->
                 <div class="chart-container" style="height: 150px;"><canvas id="chartTengah"></canvas></div>
 
                 <div class="video-box" style="margin-top:15px;">
@@ -194,7 +212,6 @@
             <article class="step" data-step="7">
                 <h2>Duka Jalur Timur (Tamiang)</h2>
                 <p>Volume air melampaui kapasitas tanggul akibat gundulnya <strong style="color: #3b82f6;">793,57 hektare</strong> penyangga ekologis di hulunya. Sama seperti Jambo Aye, deforestasi meledak di akhir tahun 2025.</p>
-                <!-- GRAFIK BULANAN TAMIANG -->
                 <div class="chart-container" style="height: 150px;"><canvas id="chartTamiang"></canvas></div>
 
                 <div class="video-box" style="margin-top:15px;">
@@ -236,7 +253,6 @@
                     • <strong>Citra Satelit Base:</strong> Esri, Maxar, Earthstar Geographics.
                 </div>
 
-                <!-- DIKUNCI UKURANNYA AGAR KECIL -->
                 <div class="kredit-logos">
                     <img src="FileTambahan/Logo_HAKA.svg" alt="HAkA" style="height: 50px; width: auto;" onerror="this.style.display='none'">
                     <img src="FileTambahan/Logo_kelompok.png" alt="Kelompok" style="height: 50px; width: auto;" onerror="this.src='FileTambahan/Logo_kelompok.svg'">
@@ -264,7 +280,8 @@
         }
         buatHujan();
 
-        var map = L.map('map', { scrollWheelZoom: false, dragging: true, tap: true }).setView([-0.789, 113.921], 5);
+        // PERBAIKAN PETA: Matikan fungsi drag dan zoom manual agar tidak bentrok dengan scroll
+        var map = L.map('map', { scrollWheelZoom: false, dragging: false, tap: false, zoomControl: false }).setView([-0.789, 113.921], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }).addTo(map);
 
         var layerKEL, layerDeforestasi, layerKabupaten, layerLongsor;
@@ -360,7 +377,7 @@
                 map.flyTo([4.3, 97.6], 8, {animate: true, duration: 2.0});
             }
             else if (bab === 4) {
-                kabAktifMode = 3; // MUNCULKAN BATAS KEL & KABUPATEN SAAT HUJAN
+                kabAktifMode = 3; 
                 if(layerKEL) layerKEL.addTo(map);
                 if(layerKabupaten) { layerKabupaten.addTo(map); layerKabupaten.setStyle(layerKabupaten.options.style); }
                 map.flyTo([4.3, 97.6], 8, {animate: true, duration: 2.0});
@@ -437,7 +454,6 @@
             ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'].forEach(b => labelsBulan.push(b + " '" + thn));
         }
 
-        // DATA DEFORESTASI BULANAN DARI TABEL (2019-2025)
         const dataJamboAye = [24.16, 50.58, 28.33, 22.03, 1.45, 3.03, 36.48, 8.57, 6.82, 5.68, 28.47, 3.07, 32.54, 9.15, 100.8, 32.87, 2.5, 4.2, 18.04, 37.95, 1.45, 1.0, 20.09, 46.62, 34.04, 5.42, 13.1, 15.02, 1.28, 12.21, 15.83, 5.92, 1.9, 11.73, 25.91, 3.77, 36.94, 28.6, 4.88, 10.39, 31, 23.1, 10.74, 10.71, 20.78, 52.73, 59.2, 55.18, 68.16, 37.43, 51.99, 20.36, 14.8, 25.4, 5.87, 5.23, 35.82, 16.17, 17.72, 16.12, 17.79, 46.56, 36.81, 19.23, 47.1, 42.21, 15.01, 30.85, 9.43, 30.71, 39.89, 25.53, 30.83, 28.84, 17.02, 21.18, 45.55, 19.65, 668.74, 678.81];
         const dataTamiang = [23.75, 31.98, 55.74, 7.35, 3.7, 7.46, 0.38, 5.35, 3.68, 19.66, 7.59, 12.93, 13.13, 3.26, 33.02, 12.3, 2.32, 0.85, 1.59, 7.43, 1.41, 1.37, 5.76, 1.85, 2.12, 20.05, 20.16, 4.54, 2.55, 4.63, 1.15, 7.68, 0.41, 0.19, 1.34, 5.96, 0.87, 1.5, 0.81, 0.42, 1.53, 1.7, 1.91, 0.26, 0.21, 3.63, 8.37, 2.25, 1.22, 3.61, 0.99, 1.33, 0.35, 1.04, 0.53, 2.09, 3.28, 1.31, 1.27, 3.02, 0.57, 2.21, 2.13, 3.5, 2.61, 12.8, 0.57, 0.42, 0.99, 0.63, 2.9, 1.2, 2.45, 1.29, 0.55, 1.73, 0.52, 4.89, 56.67, 316.8];
         const dataAlasSingkil = [22.33, 34.08, 44.51, 9.92, 12.43, 6.14, 11.2, 3.05, 12.93, 16.15, 0.97, 17.94, 40.34, 38.68, 49.91, 30.44, 3.62, 12.94, 22.46, 28.49, 28.52, 29.55, 27.9, 24.71, 13.38, 79.2, 12.76, 7.75, 2.8, 3.92, 2.63, 9.58, 2.66, 0.89, 4.71, 8.94, 2.44, 3.64, 1.56, 2.8, 2.86, 1.95, 2.56, 1.55, 2.3, 2.98, 2.07, 7.34, 1.18, 2.56, 0.88, 1.78, 0.58, 6.0, 1.19, 0.54, 3.78, 3.64, 5.51, 1.36, 4.32, 0.73, 2.9, 6.13, 4.58, 2.3, 2.4, 9.53, 11.92, 2.51, 2.11, 4.87, 5.29, 2.59, 3.92, 4.87, 4.23, 0.31, 34.55, 3.7];
@@ -447,6 +463,13 @@
         new Chart(document.getElementById('chartTimur'), { type: 'line', data: { labels: labelsBulan, datasets: [{ label: 'Deforestasi (Ha)', data: dataJamboAye, borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.2)', fill: true, tension: 0.3 }] }, options: chartOptions });
         new Chart(document.getElementById('chartTengah'), { type: 'line', data: { labels: labelsBulan, datasets: [{ label: 'Deforestasi (Ha)', data: dataAlasSingkil, borderColor: '#facc15', backgroundColor: 'rgba(250, 204, 21, 0.2)', fill: true, tension: 0.3 }] }, options: chartOptions });
         new Chart(document.getElementById('chartTamiang'), { type: 'line', data: { labels: labelsBulan, datasets: [{ label: 'Deforestasi (Ha)', data: dataTamiang, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', fill: true, tension: 0.3 }] }, options: chartOptions });
+
+        // === PAKSA MULAI DARI SAMPUL ===
+        window.onload = function() {
+            if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }
+            if (window.location.hash) { window.history.replaceState('', document.title, window.location.pathname + window.location.search); }
+            setTimeout(function() { window.scrollTo(0, 0); }, 100);
+        };
     </script>
 </body>
 </html>
