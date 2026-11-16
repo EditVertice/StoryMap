@@ -10,11 +10,11 @@
     
     <style>
         /* base */
-        body, html { margin: 0; padding: 0; font-family: 'Lora', serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; overflow-y: auto; }
+        body, html { margin: 0; padding: 0; font-family: 'Lora', serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; }
         h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
         
-        /* map config - lock n disable pointer */
-        #map { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; background-color: #000; pointer-events: none; }
+        /* map config - interaksi digidupin lagi biar bisa digeser user */
+        #map { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; background-color: #000; pointer-events: auto; }
         
         /* cover */
         #sampul { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; background: url('FileTambahan/Sampul.jpg') center/cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: auto; }
@@ -32,12 +32,15 @@
         .cover-content { position: relative; z-index: 20; text-align: center; max-width: 800px; width: 90%; }
         .cover-content h1 { font-family: 'Lora', serif; font-size: 4.5rem; font-weight: 700; color: #fdfbf7; margin: 0 0 15px 0; line-height: 1.1; }
         .cover-content p { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; color: #cbd5e1; margin-bottom: 40px; }
-        .btn-mulai { background: #ea580c; color: #fff; padding: 12px 30px; font-weight: bold; font-family: 'Montserrat'; font-size: 0.9rem; letter-spacing: 1px; text-decoration: none; border-radius: 50px; display: inline-block; transition: 0.3s; }
+        
+        /* fix btn mulai cursor */
+        .btn-mulai { background: #ea580c; color: #fff; padding: 12px 30px; font-weight: bold; font-family: 'Montserrat'; font-size: 0.9rem; letter-spacing: 1px; text-decoration: none; border-radius: 50px; display: inline-block; transition: 0.3s; cursor: pointer; }
         .btn-mulai:hover { background: #c2410c; transform: scale(1.05); }
 
         /* scrolly blocks */
-        #story { position: relative; z-index: 10; pointer-events: auto; margin-top: 50vh; }
-        .step { background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; border-left: 5px solid #facc15; border-radius: 10px; padding: 30px; margin: 0 auto 80vh 5%; width: 420px; opacity: 0.2; transition: opacity 0.5s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        #story { position: relative; z-index: 10; pointer-events: none; margin-top: 50vh; }
+        /* pointer-events auto dibalikin ke step aja biar map disebelahnya tetep bisa digeser */
+        .step { pointer-events: auto; background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; border-left: 5px solid #facc15; border-radius: 10px; padding: 30px; margin: 0 auto 80vh 5%; width: 420px; opacity: 0.2; transition: opacity 0.5s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .step.is-active { opacity: 1; }
         .step h2 { color: #facc15; font-size: 1.4rem; margin-top: 0; line-height: 1.3; }
         .step p { line-height: 1.6; font-size: 0.95rem; }
@@ -133,7 +136,7 @@
         <div class="cover-content">
             <h1>Luka di Hulu<br>Duka di Hilir</h1>
             <p>Potensi Bencana Akibat Kerusakan Hutan di Hulu.</p>
-            <a href="#story" class="btn-mulai">MULAI BACA &darr;</a>
+            <a class="btn-mulai">MULAI BACA &darr;</a>
         </div>
     </header>
 
@@ -266,7 +269,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // color palette var
+        // smooth scroll tombol mulai
+        document.querySelector('.btn-mulai').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector('.step[data-step="1"]').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        // color var
         const cTimur = "#22c55e"; 
         const cTengah = "#a855f7"; 
         const cTamiang = "#14b8a6"; 
@@ -290,8 +299,8 @@
         }
         initHujan();
 
-        // setup map
-        const map = L.map('map', { scrollWheelZoom: false, dragging: false, tap: false, zoomControl: false }).setView([-0.789, 113.921], 5);
+        // setup map - interaksi dragging & tap dihidupin lagi biar user bisa geser map manual
+        const map = L.map('map', { scrollWheelZoom: false, dragging: true, tap: true, zoomControl: false }).setView([-0.789, 113.921], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
         let layKEL, layDeforestasi, layKabupaten, layLongsor, layDefoHulu;
@@ -299,10 +308,10 @@
         const layNormal = L.layerGroup();
         let modeKab = 0; 
 
-        // load json data
+        // load json
         fetch('FileTambahan/Area_KEL.json').then(r => r.json()).then(data => { layKEL = L.geoJSON(data, { style: { color: "#facc15", fillOpacity: 0.05, weight: 2, dashArray: "5, 5" } }); });
         fetch('FileTambahan/Deforestasi_KEL1.json').then(r => r.json()).then(data => { layDeforestasi = L.geoJSON(data, { style: { color: cDefoTot, weight: 0.5, fillColor: "#a0522d", fillOpacity: 0.8 } }); });
-        fetch('FileTambahan/Deforestasi_Hulu.json').then(r => r.json()).then(data => { layDefoHulu = L.geoJSON(data, { style: { color: "#3f3f46", weight: 0.5, fillColor: cDefoHulu, fillOpacity: 0.9 } }); }).catch(e => console.log('skip defo hulu'));
+        fetch('FileTambahan/Deforestasi_HuluDAS.json').then(r => r.json()).then(data => { layDefoHulu = L.geoJSON(data, { style: { color: "#3f3f46", weight: 0.5, fillColor: cDefoHulu, fillOpacity: 0.9 } }); }).catch(e => console.log('skip defo hulu'));
         
         fetch('FileTambahan/Kab_Penelitian.json').then(r => r.json()).then(data => {
             layKabupaten = L.geoJSON(data, {
@@ -335,7 +344,7 @@
         fetch('FileTambahan/KutaCane_Before.json').then(r => r.json()).then(data => { L.geoJSON(data, { style: { color: cBef, fillOpacity: 0.8 }}).addTo(layNormal); });
         fetch('FileTambahan/Tamiang_Before.json').then(r => r.json()).then(data => { L.geoJSON(data, { style: { color: cBef, fillOpacity: 0.8 }}).addTo(layNormal); });
 
-        // tombol ubah state
+        // tombol switch
         let stateSkrg = 'luka';
         function switchKondisi(status) {
             stateSkrg = status;
@@ -374,7 +383,7 @@
             document.querySelectorAll('.step').forEach(el => el.classList.remove('is-active'));
             res.element.classList.add('is-active');
 
-            // clear all layers dlu
+            // clear all layers
             [layKEL, layDeforestasi, layDefoHulu, layKabupaten, layLongsor, layBanjir, layNormal].forEach(lyr => {
                 if (lyr && map.hasLayer(lyr)) map.removeLayer(lyr);
             });
@@ -395,11 +404,13 @@
             } else if (bab === 3) {
                 modeKab = 3; 
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
+                if(layDefoHulu) layDefoHulu.addTo(map); // memunculkan defo hulu di bab timbulnya duka
                 map.flyTo([4.3, 97.6], 8, {animate: true, duration: 2.0});
             } else if (bab === 4) {
                 modeKab = 3; 
                 if(layKEL) layKEL.addTo(map);
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
+                if(layDefoHulu) layDefoHulu.addTo(map); // memunculkan defo hulu di bab hujan
                 map.flyTo([4.3, 97.6], 8, {animate: true, duration: 2.0});
             } else if (bab === 5) { 
                 modeKab = 5; 
@@ -482,7 +493,7 @@
         new Chart(document.getElementById('chartTengah'), { type: 'line', data: { labels: labelBln, datasets: [{ label: 'Deforestasi (Ha)', data: arrAlasSingkil, borderColor: cTengah, backgroundColor: 'rgba(168, 85, 247, 0.1)', fill: true, tension: 0.3 }] }, options: optChartLine });
         new Chart(document.getElementById('chartTamiang'), { type: 'line', data: { labels: labelBln, datasets: [{ label: 'Deforestasi (Ha)', data: arrTamiang, borderColor: cTamiang, backgroundColor: 'rgba(20, 184, 166, 0.1)', fill: true, tension: 0.3 }] }, options: optChartLine });
 
-        // fix scroll biar balik ke atas trs
+        // force top scroll
         window.onload = () => {
             if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             if (window.location.hash) window.history.replaceState('', document.title, window.location.pathname + window.location.search);
