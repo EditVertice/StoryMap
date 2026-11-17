@@ -329,10 +329,10 @@
         fetch('FileTambahan/Area_KEL.json').then(r => r.json()).then(data => { layKEL = L.geoJSON(data, { style: { color: "#facc15", fillOpacity: 0.05, weight: 2, dashArray: "5, 5" } }); });
         fetch('FileTambahan/Deforestasi_KEL1.json').then(r => r.json()).then(data => { layDeforestasi = L.geoJSON(data, { style: { color: "#b45309", weight: 0.6, fillColor: cDefo, fillOpacity: 0.85 } }); });
         
-        fetch('FileTambahan/Deforestasi_Hulu.json')
+        fetch('FileTambahan/Deforestasi_HuluDAS.json')
             .then(r => r.json())
             .then(data => { layDefoHulu = L.geoJSON(data, { style: { color: "#b45309", weight: 0.6, fillColor: cDefo, fillOpacity: 0.9 } }); })
-            .catch(e => console.warn('Deforestasi_Hulu.json blm keload'));
+            .catch(e => console.warn('Deforestasi_HuluDAS.json blm keload'));
         
         fetch('FileTambahan/Kab_Penelitian.json').then(r => r.json()).then(data => {
             layKabupaten = L.geoJSON(data, {
