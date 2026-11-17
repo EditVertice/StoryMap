@@ -16,6 +16,10 @@
         /* map container */
         #map { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; background-color: #000; pointer-events: auto; }
         
+        /* custom icon satwa di peta */
+        .satwa-marker { filter: drop-shadow(0 6px 8px rgba(0,0,0,0.75)); transition: transform 0.3s ease; }
+        .satwa-marker:hover { transform: scale(1.12); }
+
         /* cover */
         #sampul { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; background: url('FileTambahan/Sampul.jpg') center/cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: auto; }
         .sampul-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 1; }
@@ -156,7 +160,8 @@
             
             <article class="step" data-step="1">
                 <h2>Mengenal Ekosistem Leuser</h2>
-                <p>Membentang seluas <strong style="color: #facc15;">2,6 juta hektare</strong> melintasi Provinsi Aceh dan Sumatera Utara, Kawasan Ekosistem Leuser (KEL) bukan sekadar benteng terakhir satwa endemik. Ini adalah "menara air" raksasa. Spons ekologis yang memompa napas kehidupan bagi jutaan manusia.</p>
+                <p>Kawasan Ekosistem Leuser (KEL) merupakan salah satu kawasan hutan tropis terpenting di Indonesia yang membentang seluas <strong style="color: #facc15;">2,6 juta hektare</strong> di Provinsi Aceh dan Sumatera Utara. Kawasan ini menyimpan kekayaan keanekaragaman hayati yang luar biasa, mulai dari hutan hujan tropis hingga menjadi habitat bagi berbagai satwa langka dan dilindungi, seperti orangutan, harimau, gajah, dan badak Sumatra.</p>
+                <p>Lebih dari sekadar kawasan konservasi, Ekosistem Leuser memiliki peran penting dalam menjaga keseimbangan alam. Hutan di dalamnya berfungsi sebagai daerah tangkapan air, menjaga aliran sungai, serta menopang kehidupan masyarakat yang tinggal di sekitarnya. Dengan demikian, kelestarian Leuser tidak hanya penting bagi keberlangsungan ekosistem, tetapi juga bagi kehidupan manusia.</p>
             </article>
 
             <article class="step" data-step="2">
@@ -273,7 +278,7 @@
         const cTimur = "#22c55e"; 
         const cTengah = "#a855f7"; 
         const cTamiang = "#14b8a6"; 
-        const cDefo = "#d97706"; // coklat terang disamain buat semua deforestasi
+        const cDefo = "#d97706"; 
         const cBef = "#38bdf8"; 
         const cAft = "#1e3a8a"; 
         const cLongsor = "#be123c"; 
@@ -299,16 +304,35 @@
         let layKEL, layDeforestasi, layKabupaten, layLongsor, layDefoHulu;
         const layBanjir = L.layerGroup(); 
         const layNormal = L.layerGroup();
+        const laySatwa = L.layerGroup();
         let modeKab = 0; 
+
+        // setup marker gambar satwa buat bab 1 (nama file sesuai di folder)
+        const daftarSatwa = [
+            { pos: [4.62, 97.48], img: 'Gajah.png', size: [95, 75] },
+            { pos: [3.98, 97.12], img: 'badak.png', size: [95, 70] },
+            { pos: [3.92, 97.78], img: 'orangutan.png', size: [80, 80] },
+            { pos: [3.38, 97.58], img: 'Harimau.png', size: [95, 70] }
+        ];
+
+        daftarSatwa.forEach(s => {
+            const iconHewan = L.icon({
+                iconUrl: 'FileTambahan/' + s.img,
+                iconSize: s.size,
+                iconAnchor: [s.size[0] / 2, s.size[1] / 2],
+                className: 'satwa-marker'
+            });
+            L.marker(s.pos, { icon: iconHewan, interactive: false }).addTo(laySatwa);
+        });
 
         // load geojson
         fetch('FileTambahan/Area_KEL.json').then(r => r.json()).then(data => { layKEL = L.geoJSON(data, { style: { color: "#facc15", fillOpacity: 0.05, weight: 2, dashArray: "5, 5" } }); });
         fetch('FileTambahan/Deforestasi_KEL1.json').then(r => r.json()).then(data => { layDeforestasi = L.geoJSON(data, { style: { color: "#b45309", weight: 0.6, fillColor: cDefo, fillOpacity: 0.85 } }); });
         
-        fetch('FileTambahan/Deforestasi_HuluDAS.json')
+        fetch('FileTambahan/Deforestasi_Hulu.json')
             .then(r => r.json())
             .then(data => { layDefoHulu = L.geoJSON(data, { style: { color: "#b45309", weight: 0.6, fillColor: cDefo, fillOpacity: 0.9 } }); })
-            .catch(e => console.warn('Deforestasi_HuluDAS.json blm keload'));
+            .catch(e => console.warn('Deforestasi_Hulu.json blm keload'));
         
         fetch('FileTambahan/Kab_Penelitian.json').then(r => r.json()).then(data => {
             layKabupaten = L.geoJSON(data, {
@@ -372,14 +396,14 @@
             }
         }
 
-        // setup chart configs & instances biar bisa di-trigger animasinya pas masuk bab
+        // setup chart configs & instances
         const optChartDefo = { animation: { duration: 1200, easing: 'easeOutQuart' }, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'white', font: {size: 10} } } }, scales: { x: { ticks: { color: 'white', font: {size: 9} } }, y: { ticks: { color: 'white', font: {size: 9} } } } };
         const optChartNoLegend = { animation: { duration: 1200, easing: 'easeOutQuart' }, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'white', font: {size: 9} } }, y: { ticks: { color: 'white', font: {size: 9} } } } };
         const optChartLine = { animation: { duration: 1500, easing: 'easeOutQuart' }, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(255,255,255,0.7)', font: {size: 8}, maxTicksLimit: 7 } }, y: { ticks: { color: 'rgba(255,255,255,0.7)', font: {size: 9} } } }, elements: { point: { radius: 1 } } };
 
         const cInstanceDefo = new Chart(document.getElementById('chartDeforestasi'), {
             type: 'bar',
-            data: { labels: ['2020','2021','2022','2023','2024','2025'], datasets: [{ label: 'Berasan Luka (Ha)', data: [5000, 4500, 4000, 4800, 8689, 28011], backgroundColor: cDefo }] },
+            data: { labels: ['2020','2021','2022','2023','2024','2025'], datasets: [{ label: 'Hilang (Ha)', data: [5000, 4500, 4000, 4800, 8689, 28011], backgroundColor: cDefo }] },
             options: optChartDefo
         });
 
@@ -418,7 +442,6 @@
         const cInstanceTengah = new Chart(document.getElementById('chartTengah'), { type: 'line', data: { labels: labelBln, datasets: [{ label: 'Deforestasi (Ha)', data: arrAlasSingkil, borderColor: cTengah, backgroundColor: 'rgba(168, 85, 247, 0.1)', fill: true, tension: 0.3 }] }, options: optChartLine });
         const cInstanceTamiang = new Chart(document.getElementById('chartTamiang'), { type: 'line', data: { labels: labelBln, datasets: [{ label: 'Deforestasi (Ha)', data: arrTamiang, borderColor: cTamiang, backgroundColor: 'rgba(20, 184, 166, 0.1)', fill: true, tension: 0.3 }] }, options: optChartLine });
 
-        // fungsi buat ulang animasi chart pas babnya dibuka
         function playChartAnim(chartObj) {
             if (chartObj) {
                 chartObj.reset();
@@ -433,7 +456,8 @@
             document.querySelectorAll('.step').forEach(el => el.classList.remove('is-active'));
             res.element.classList.add('is-active');
 
-            [layKEL, layDeforestasi, layDefoHulu, layKabupaten, layLongsor, layBanjir, layNormal].forEach(lyr => {
+            // bersihin layer termasuk layer satwa
+            [layKEL, laySatwa, layDeforestasi, layDefoHulu, layKabupaten, layLongsor, layBanjir, layNormal].forEach(lyr => {
                 if (lyr && map.hasLayer(lyr)) map.removeLayer(lyr);
             });
 
@@ -442,29 +466,30 @@
             document.getElementById('rain-container').style.display = (bab === 4) ? 'block' : 'none';
             modeKab = 0; 
 
+            // koordinat longitude 97.05 bikin peta KEL agak geser ke kanan layar (bebas dari box cerita di kiri)
             if (bab === 1) {
                 if(layKEL) layKEL.addTo(map);
-                map.flyTo([4.1, 97.4], 7, {animate: true, duration: 2.0});
+                laySatwa.addTo(map);
+                map.flyTo([3.85, 97.05], 8, {animate: true, duration: 2.0});
             } else if (bab === 2) {
                 if(layKEL) layKEL.addTo(map);
                 if(layDeforestasi) layDeforestasi.addTo(map);
                 playChartAnim(cInstanceDefo);
-                // zoom in ke level 8 & geser agak ke kanan biar shp deforestasi jelas gak ketutup box
-                map.flyTo([4.1, 97.65], 8, {animate: true, duration: 1.8});
+                map.flyTo([3.85, 97.05], 8, {animate: true, duration: 1.8});
             } else if (bab === 3) {
                 modeKab = 3; 
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
                 if(layDefoHulu) layDefoHulu.addTo(map);
                 playChartAnim(cInstanceLuas);
                 playChartAnim(cInstanceDAS);
-                map.flyTo([4.3, 97.6], 8, {animate: true, duration: 2.0});
+                map.flyTo([4.15, 97.25], 8, {animate: true, duration: 2.0});
             } else if (bab === 4) {
                 modeKab = 3; 
                 if(layKEL) layKEL.addTo(map);
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
                 if(layDefoHulu) layDefoHulu.addTo(map);
                 playChartAnim(cInstanceHujan);
-                map.flyTo([4.3, 97.6], 8, {animate: true, duration: 2.0});
+                map.flyTo([4.15, 97.25], 8, {animate: true, duration: 2.0});
             } else if (bab === 5) { 
                 modeKab = 5; 
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
@@ -472,7 +497,7 @@
                 document.getElementById('simulasi-panel').style.display = 'flex';
                 switchKondisi(stateSkrg); 
                 playChartAnim(cInstanceTimur);
-                map.flyTo([5.1, 97.6], 11, {animate: true, duration: 2.5}); 
+                map.flyTo([5.1, 97.5], 11, {animate: true, duration: 2.5}); 
             } else if (bab === 6) { 
                 modeKab = 6; 
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
@@ -480,7 +505,7 @@
                 document.getElementById('simulasi-panel').style.display = 'flex';
                 switchKondisi(stateSkrg);
                 playChartAnim(cInstanceTengah);
-                map.flyTo([3.6, 97.8], 10, {animate: true, duration: 2.5}); 
+                map.flyTo([3.6, 97.65], 10, {animate: true, duration: 2.5}); 
             } else if (bab === 7) { 
                 modeKab = 7; 
                 if(layKabupaten) { layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
@@ -488,18 +513,18 @@
                 document.getElementById('simulasi-panel').style.display = 'flex';
                 switchKondisi(stateSkrg);
                 playChartAnim(cInstanceTamiang);
-                map.flyTo([4.3, 98.0], 11, {animate: true, duration: 2.5});
+                map.flyTo([4.3, 97.95], 11, {animate: true, duration: 2.5});
             } else if (bab === 8) { 
-                if(layKEL) layKEL.addTo(map); // tambahin batas KEL di bab longsor
+                if(layKEL) layKEL.addTo(map);
                 if(layLongsor) layLongsor.addTo(map);
-                map.flyTo([4.1, 97.5], 8, {animate: true, duration: 2.0});
+                map.flyTo([3.95, 97.15], 8, {animate: true, duration: 2.0});
             } else if (bab >= 9) { 
                 if(layKEL) layKEL.addTo(map);
                 if(layDeforestasi) layDeforestasi.addTo(map);
                 if(layKabupaten) { modeKab = 0; layKabupaten.addTo(map); layKabupaten.setStyle(layKabupaten.options.style); }
                 if(layLongsor) layLongsor.addTo(map);
                 switchKondisi('luka'); 
-                map.flyTo([4.1, 97.4], 7, {animate: true, duration: 2.5});
+                map.flyTo([3.95, 97.15], 7, {animate: true, duration: 2.5});
             }
         });
 
